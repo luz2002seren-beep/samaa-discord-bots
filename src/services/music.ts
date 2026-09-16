@@ -73,7 +73,18 @@ export class MusicService {
     this.current.delete(guildId);
     if (!player) return false;
     await player.stopTrack();
-    await player.destroy();
+
+    // FIX: destroy() only removes the player on NodeLink's side, it does NOT
+    // tell Discord's gateway that the bot left the voice channel. Discord
+    // keeps thinking the bot is still connected, so the next joinVoiceChannel()
+    // call for the same guild never triggers a fresh VOICE_SERVER_UPDATE.
+    // NodeLink then creates a new player that waits forever for voice
+    // credentials that will never arrive ("No voice state ... enqueued").
+    //
+    // leaveVoiceChannel() performs a real disconnect (sends the voice state
+    // update to Discord AND removes the player), so the next join is clean.
+    await this.shoukaku.leaveVoiceChannel(guildId);
+
     return true;
   }
 
