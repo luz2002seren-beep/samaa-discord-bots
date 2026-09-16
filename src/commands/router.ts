@@ -34,6 +34,8 @@ export class CommandRouter {
     if (command === 'بنر' && message.mentions.users.has(this.client.user!.id)) return this.changeBanner(message, this.withoutOwnMention(message, args));
     if (command === 'اسم' && message.mentions.users.has(this.client.user!.id)) return this.changeName(message, this.withoutOwnMention(message, args));
     if (command.toLowerCase() === 'afk') return this.afk(message, args);
+    if (command === 'قناة') return this.commandChannel(message, args);
+
     const configured = this.store.getGuild(message.guild.id).commandChannelId;
     if (configured && message.channel.id !== configured) return;
 
@@ -95,6 +97,19 @@ export class CommandRouter {
       await this.client.user!.setUsername(name);
       await respond(message, 'تم تغيير الاسم', `الاسم الجديد: **${name}**`);
     } catch (error) { await respond(message, 'تعذر تغيير الاسم', error instanceof Error ? error.message : 'Discord رفض تغيير الاسم حاليًا؛ جرب لاحقًا.'); }
+  }
+
+  private async commandChannel(message: Message, args: string): Promise<void> {
+    if (!message.member!.permissions.has(PermissionFlagsBits.ManageGuild)) {
+      return void respond(message, 'صلاحيات غير كافية', 'تحتاج صلاحية **Manage Server** لتحديد روم الأوامر.');
+    }
+    const sub = args.trim();
+    if (sub === 'الغاء' || sub === 'إلغاء') {
+      await this.store.clearCommandChannel(message.guild!.id);
+      return void respond(message, 'تم الإلغاء', 'أوامر البوت أصبحت تعمل في كل الرومات من جديد.');
+    }
+    await this.store.setCommandChannel(message.guild!.id, message.channel.id);
+    await respond(message, 'تم التثبيت', `أوامر البوت ستعمل الآن فقط في <#${message.channel.id}>.\nلإلغاء ذلك: \`قناة الغاء\``);
   }
 
   private async pinRoom(message: Message): Promise<void> {
@@ -212,4 +227,4 @@ export class CommandRouter {
     }
     return void respond(message, 'قائمتي', 'الأوامر: إنشاء، إضافة، تشغيل، عرض.\nللإضافة: `قائمتي إضافة <اسم القائمة> | <رابط أو بحث>`');
   }
-}
+        }
