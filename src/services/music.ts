@@ -65,9 +65,18 @@ export class MusicService {
     if (!player || !this.current.has(guildId)) return false;
     this.current.delete(guildId);
     await player.stopTrack();
-    // Advancing to the next queued track is now explicit: it only happens
-    // here (a deliberate skip), never automatically when a track finishes.
-    await this.playNext(guildId, player);
+
+    const hasNext = (this.queues.get(guildId)?.length ?? 0) > 0;
+    if (hasNext) {
+      // There's something queued after this one — advance to it (only
+      // happens here, on an explicit skip, never automatically).
+      await this.playNext(guildId, player);
+    } else {
+      // Nothing queued after this one — stop completely instead of staying
+      // connected and idle. Same real disconnect as stop() uses.
+      this.queues.delete(guildId);
+      await this.shoukaku.leaveVoiceChannel(guildId);
+    }
     return true;
   }
 
