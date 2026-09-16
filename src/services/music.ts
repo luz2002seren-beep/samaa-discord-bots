@@ -72,10 +72,10 @@ export class MusicService {
       // happens here, on an explicit skip, never automatically).
       await this.playNext(guildId, player);
     } else {
-      // Nothing queued after this one — stop completely instead of staying
-      // connected and idle. Same real disconnect as stop() uses.
+      // Nothing queued after this one — just stop playback and stay
+      // connected/pinned in the room, same as stop(). Nothing plays on
+      // its own.
       this.queues.delete(guildId);
-      await this.shoukaku.leaveVoiceChannel(guildId);
     }
     return true;
   }
@@ -86,18 +86,10 @@ export class MusicService {
     this.current.delete(guildId);
     if (!player) return false;
     await player.stopTrack();
-
-    // FIX: destroy() only removes the player on NodeLink's side, it does NOT
-    // tell Discord's gateway that the bot left the voice channel. Discord
-    // keeps thinking the bot is still connected, so the next joinVoiceChannel()
-    // call for the same guild never triggers a fresh VOICE_SERVER_UPDATE.
-    // NodeLink then creates a new player that waits forever for voice
-    // credentials that will never arrive ("No voice state ... enqueued").
-    //
-    // leaveVoiceChannel() performs a real disconnect (sends the voice state
-    // update to Discord AND removes the player), so the next join is clean.
-    await this.shoukaku.leaveVoiceChannel(guildId);
-
+    // Only playback is stopped here — the bot stays connected to the voice
+    // channel (pinned) instead of leaving. Because the player is never
+    // destroyed or disconnected, the next "ش" reuses this same live
+    // connection instantly, with no rejoin and no "No voice state" risk.
     return true;
   }
 
