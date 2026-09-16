@@ -33,8 +33,8 @@ export class CommandRouter {
     if (command === 'افتار' && message.mentions.users.has(this.client.user!.id)) return this.changeAvatar(message, this.withoutOwnMention(message, args));
     if (command === 'بنر' && message.mentions.users.has(this.client.user!.id)) return this.changeBanner(message, this.withoutOwnMention(message, args));
     if (command === 'اسم' && message.mentions.users.has(this.client.user!.id)) return this.changeName(message, this.withoutOwnMention(message, args));
+    if (command === 'قناة' && message.mentions.users.has(this.client.user!.id)) return this.commandChannel(message, this.withoutOwnMention(message, args));
     if (command.toLowerCase() === 'afk') return this.afk(message, args);
-    if (command === 'قناة') return this.commandChannel(message, args);
 
     const configured = this.store.getGuild(message.guild.id).commandChannelId;
     if (configured && message.channel.id !== configured) return;
@@ -109,7 +109,7 @@ export class CommandRouter {
       return void respond(message, 'تم الإلغاء', 'أوامر البوت أصبحت تعمل في كل الرومات من جديد.');
     }
     await this.store.setCommandChannel(message.guild!.id, message.channel.id);
-    await respond(message, 'تم التثبيت', `أوامر البوت ستعمل الآن فقط في <#${message.channel.id}>.\nلإلغاء ذلك: \`قناة الغاء\``);
+    await respond(message, 'تم التثبيت', `أوامر البوت ستعمل الآن فقط في <#${message.channel.id}>.\nلإلغاء ذلك: \`قناة @البوت الغاء\``);
   }
 
   private async pinRoom(message: Message): Promise<void> {
@@ -227,4 +227,4 @@ export class CommandRouter {
     }
     return void respond(message, 'قائمتي', 'الأوامر: إنشاء، إضافة، تشغيل، عرض.\nللإضافة: `قائمتي إضافة <اسم القائمة> | <رابط أو بحث>`');
   }
-        }
+                          }
