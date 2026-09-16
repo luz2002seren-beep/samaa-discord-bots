@@ -44,6 +44,13 @@ export class Store {
     await this.flush();
   }
 
+  async clearCommandChannel(guildId: string): Promise<void> {
+    const settings = { ...this.getGuild(guildId) };
+    delete settings.commandChannelId;
+    this.data.guilds[guildId] = settings;
+    await this.flush();
+  }
+
   pinnedVoiceChannels(): Array<[string, string]> {
     return Object.entries(this.data.guilds)
       .flatMap(([guildId, settings]) => settings.pinnedVoiceChannelId ? [[guildId, settings.pinnedVoiceChannelId] as [string, string]] : []);
