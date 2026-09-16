@@ -63,7 +63,11 @@ export class MusicService {
   async skip(guildId: string): Promise<boolean> {
     const player = this.shoukaku.players.get(guildId) as NodeLinkPlayer | undefined;
     if (!player || !this.current.has(guildId)) return false;
+    this.current.delete(guildId);
     await player.stopTrack();
+    // Advancing to the next queued track is now explicit: it only happens
+    // here (a deliberate skip), never automatically when a track finishes.
+    await this.playNext(guildId, player);
     return true;
   }
 
@@ -92,9 +96,13 @@ export class MusicService {
     const existing = this.shoukaku.players.get(guildId) as NodeLinkPlayer | undefined;
     if (existing) return existing;
     const player = await this.shoukaku.joinVoiceChannel({ guildId, channelId, shardId, deaf: true }) as unknown as NodeLinkPlayer;
+    // Previously this called playNext() here, which auto-continued to the
+    // next queued track as soon as one song finished. Now a natural end
+    // just stops playback — the bot stays connected and waits for a new
+    // "ش" command instead of playing anything on its own. Moving forward
+    // through the queue only happens explicitly, via skip().
     player.on('end', () => {
       this.current.delete(guildId);
-      void this.playNext(guildId, player);
     });
     return player;
   }
